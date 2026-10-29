@@ -1,0 +1,4 @@
+﻿selection,mode,parameter,fault_accuracy_percent,delta_accuracy_points,prediction_changed_count,new_error_count,new_critical_count
+latest_critical_truncate,truncate,k=11/12,70.6,-2.8000000000000114,34,21,1
+latest_error_truncate,truncate,k=11/12,70.6,-2.8000000000000114,34,21,1
+worst_forced_score,force_score_max,class=0:_silence_,8.4,-65.0,458,326,408

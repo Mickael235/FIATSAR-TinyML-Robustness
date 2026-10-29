@@ -1,0 +1,6 @@
+﻿model,condition,n,pc_accuracy_percent,nano_accuracy_percent,bit_exact_count,bit_exact_percent,prediction_match_count,prediction_match_percent,latency_mean_ms,latency_min_ms,latency_max_ms,latency_median_ms
+original,clean,50,82.0,72.0,1,2.0,41,82.0,85.79128,85.71,85.865,85.791
+original,a1_10db,50,66.0,60.0,0,0.0,41,82.0,85.76408,85.696,85.801,85.768
+original,a1_0db,50,44.0,46.0,0,0.0,39,78.0,85.79168,85.749,85.85,85.7975
+original,fgsm_05,50,32.0,38.0,0,0.0,41,82.0,85.8176,85.783,85.859,85.8175
+original,pgd_05,50,26.0,28.000000000000004,0,0.0,40,80.0,85.80633999999999,85.742,85.879,85.812

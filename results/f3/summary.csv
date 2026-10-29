@@ -1,0 +1,3 @@
+﻿layer,n_cutpoints,sweep_step,worst_cut_k,total_terms,worst_completion_percent,worst_accuracy_percent,worst_delta_accuracy_points,worst_prediction_changed_count,worst_new_error_count,worst_new_critical_count
+FullyConnected,4001,1,0,4000,0.0,8.4,-65.0,458,326,408
+Conv2D,81,1,0,80,0.0,8.4,-65.0,458,326,408

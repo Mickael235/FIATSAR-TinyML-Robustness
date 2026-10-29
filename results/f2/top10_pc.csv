@@ -1,0 +1,11 @@
+﻿rank,mode,layer,tensor_index,trial,sample_order,dataset_index,true_label,activation_index,bit,old_int8,new_int8,base_pred,fault_pred,new_error,new_critical_confusion,max_abs_score_diff
+1,bitflip,FullyConnected_logits,10,613,186,4291,go,0,7,-27,101,go,_silence_,1,1,253
+2,bitflip,FullyConnected_logits,10,650,80,959,left,7,7,-11,117,left,right,1,1,253
+3,bitflip,FullyConnected_logits,10,353,213,1573,off,0,7,-44,84,off,_silence_,1,1,245
+4,bitflip,FullyConnected_logits,10,73,258,3603,on,0,7,-29,99,on,_silence_,1,1,237
+5,bitflip,FullyConnected_logits,10,661,442,3623,left,7,6,29,93,left,right,1,1,226
+6,bitflip,FullyConnected_logits,10,941,33,70,left,0,7,-32,96,left,_silence_,1,1,224
+7,bitflip,FullyConnected_logits,10,990,474,284,on,9,6,43,107,on,off,1,1,219
+8,bitflip,FullyConnected_logits,10,813,249,2890,stop,11,6,17,81,stop,go,1,1,212
+9,zero,FullyConnected_logits,10,903,13,4036,off,9,-1,82,6,off,on,1,1,212
+10,bitflip,FullyConnected_logits,10,984,375,3516,right,6,6,22,86,right,left,1,1,202

@@ -1,0 +1,11 @@
+﻿rank,mode,parameter,completion_percent,fault_accuracy_percent,delta_accuracy_points,prediction_changed_count,new_error_count,new_critical_count
+1,truncate,k=1/12,8.333333333333334,8.4,-65.0,458,326,408
+2,force_score_max,class=0:_silence_,,8.4,-65.0,458,326,408
+3,truncate,k=2/12,16.666666666666668,16.8,-56.60000000000001,430,314,42
+4,force_score_max,class=11:go,,9.4,-64.0,460,340,41
+5,force_score_max,class=6:left,,9.0,-64.4,452,332,41
+6,force_score_max,class=7:right,,9.0,-64.4,452,326,41
+7,force_score_max,class=9:off,,9.4,-64.0,458,332,39
+8,force_score_max,class=10:stop,,9.4,-64.0,453,327,39
+9,force_score_max,class=8:on,,9.4,-64.0,452,326,39
+10,truncate,k=3/12,25.0,24.4,-49.00000000000001,387,278,15

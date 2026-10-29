@@ -1,0 +1,13 @@
+﻿mode,forced_class_id,forced_class,forced_value_int8,baseline_accuracy_percent,fault_accuracy_percent,delta_accuracy_points,prediction_changed_count,prediction_changed_percent,new_error_count,recovered_error_count,new_critical_count
+force_score_max,0,_silence_,127,73.4,8.4,-65.0,458,91.60000000000001,326,1,408
+force_score_max,1,_unknown_,127,73.4,8.4,-65.0,472,94.39999999999999,355,30,0
+force_score_max,2,yes,127,73.4,8.4,-65.0,457,91.4,331,6,0
+force_score_max,3,no,127,73.4,9.0,-64.4,460,92.0,342,20,0
+force_score_max,4,up,127,73.4,9.0,-64.4,445,89.0,330,8,0
+force_score_max,5,down,127,73.4,9.0,-64.4,442,88.4,331,9,0
+force_score_max,6,left,127,73.4,9.0,-64.4,452,90.4,332,10,41
+force_score_max,7,right,127,73.4,9.0,-64.4,452,90.4,326,4,41
+force_score_max,8,on,127,73.4,9.4,-64.0,452,90.4,326,6,39
+force_score_max,9,off,127,73.4,9.4,-64.0,458,91.60000000000001,332,12,39
+force_score_max,10,stop,127,73.4,9.4,-64.0,453,90.60000000000001,327,7,39
+force_score_max,11,go,127,73.4,9.4,-64.0,460,92.0,340,20,41

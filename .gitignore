@@ -1,0 +1,21 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+
+# Generated Arduino headers / build artifacts
+**/model_data.h
+**/softmax_model_data.h
+**/fc_tail_model_data.h
+**/conv_fault_model_data.h
+*.elf
+*.hex
+*.bin
+
+# Local datasets / large generated artifacts
+data/raw/
+data/cache/
+*.wav

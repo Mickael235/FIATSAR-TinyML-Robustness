@@ -1,0 +1,5 @@
+case,pc_accuracy_percent,nano_prefaulted_accuracy_percent,nano_runtime_accuracy_percent,nano_runtime_delta_points,runtime_vs_prefaulted_accuracy_difference_points,runtime_prediction_changed_count
+nominal,73.40,67.00,67.00,0.00,0.00,0
+conv_w5_b7,63.20,55.80,55.80,-11.20,0.00,156
+conv_w31_b7,65.00,58.60,58.60,-8.40,0.00,143
+fc_w45024_b7,72.80,67.00,67.00,0.00,0.00,0

@@ -1,0 +1,6 @@
+﻿model,condition,n,pc_accuracy_percent,nano_accuracy_percent,bit_exact_count,bit_exact_percent,prediction_match_count,prediction_match_percent,latency_mean_ms,latency_min_ms,latency_max_ms,latency_median_ms
+durci_fgsm_eps0.5,clean,50,74.0,62.0,0,0.0,43,86.0,85.82047999999999,85.743,85.876,85.8175
+durci_fgsm_eps0.5,a1_10db,50,62.0,48.0,0,0.0,37,74.0,85.77096,85.702,85.863,85.7655
+durci_fgsm_eps0.5,a1_0db,50,42.0,32.0,0,0.0,38,76.0,85.76346000000001,85.705,85.825,85.765
+durci_fgsm_eps0.5,fgsm_05,50,46.0,44.0,0,0.0,40,80.0,85.80203999999999,85.738,85.839,85.8025
+durci_fgsm_eps0.5,pgd_05,50,38.0,42.0,0,0.0,42,84.0,85.82214,85.775,85.866,85.827

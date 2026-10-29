@@ -1,0 +1,11 @@
+﻿rank,mode,sample_order,dataset_index,true_label,activation_index,bit,pc_old_int8,pc_new_int8,nano_old_int8,nano_new_int8,pc_base_pred,pc_fault_pred,nano_base_pred,nano_fault_pred,nano_prediction_changed,nano_new_error,fault_prediction_match_pc,full_transition_match_pc,nano_nominal_us,nano_fault_us
+1,bitflip,186,4291,go,0,7,-27,101,-27,101,go,_silence_,go,_silence_,1,1,1,1,88341,88488
+2,bitflip,80,959,left,7,7,-11,117,-9,119,left,right,stop,right,1,0,1,0,88406,88509
+3,bitflip,213,1573,off,0,7,-44,84,-44,84,off,_silence_,off,_silence_,1,1,1,1,88419,88572
+4,bitflip,258,3603,on,0,7,-29,99,-29,99,on,_silence_,on,_silence_,1,1,1,1,88377,88597
+5,bitflip,442,3623,left,7,6,29,93,26,90,left,right,left,right,1,1,1,1,88457,88595
+6,bitflip,33,70,left,0,7,-32,96,-32,96,left,_silence_,left,_silence_,1,1,1,1,88331,88549
+7,bitflip,474,284,on,9,6,43,107,54,118,on,off,on,off,1,1,1,1,88400,88494
+8,bitflip,249,2890,stop,11,6,17,81,24,88,stop,go,stop,go,1,1,1,1,88384,88550
+9,zero,13,4036,off,9,-1,82,6,105,6,off,on,off,on,1,1,1,1,88410,88541
+10,bitflip,375,3516,right,6,6,22,86,22,86,right,left,right,left,1,1,1,1,88394,88564
