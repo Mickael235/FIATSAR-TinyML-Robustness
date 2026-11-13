@@ -1,8 +1,8 @@
-# FIATSAR — TinyML Robustness on Arduino Nano 33 BLE
+# FIATSAR — TinyML Robustness on Arduino Nano 33 BLE Sense
 
-Robustness evaluation of a **TinyML Keyword Spotting (KWS)** system, from Google Speech Commands to deployment on an **Arduino Nano 33 BLE Sense** with TensorFlow Lite Micro.
+Robustness evaluation of a **TinyML Keyword Spotting (KWS)** system, from Google Speech Commands to deployment on an **Arduino Nano 33 BLE Sense** using TensorFlow Lite Micro.
 
-The project studies how a quantized speech-command model behaves when its input is perturbed, and whether the robustness measured on a desktop TFLite interpreter is preserved after deployment on a microcontroller.
+The project studies how an embedded speech-command model behaves under input perturbations, how robustness can be improved through retraining, and whether the behavior measured on desktop TensorFlow Lite is preserved after INT8 quantization and microcontroller deployment.
 
 > **Academic work in progress.**  
 > This repository is a curated public snapshot of the FIATSAR project and does not contain the complete internal workspace.
@@ -11,29 +11,31 @@ The project studies how a quantized speech-command model behaves when its input 
 
 ## Project objective
 
-The project addresses a simple question:
+The project addresses the following question:
 
 > **Can an embedded keyword-spotting model remain reliable when its input is perturbed?**
 
-The motivating use case is an embedded voice-command system in a vehicle, where not all classification errors have the same impact.
+The motivating use case is an embedded voice-command system where some classification errors may be more critical than others.
 
-Examples of critical confusions include:
+Examples include:
 
 - `stop → go`
 - `left → right`
 - `on → off`
 - command → `_silence_`
 
-The experimental platform is therefore designed to compare:
+The experimental platform is designed to compare the behavior of the same TinyML model across:
 
 ```text
-nominal behavior
-        ↓
-perturbed behavior
-        ↓
-desktop TFLite
-        ↔
-Arduino / TFLite Micro
+clean input
+    ↓
+perturbed input
+    ↓
+TensorFlow / Keras
+    ↓
+TFLite INT8 on desktop
+    ↓
+TFLite Micro on Arduino
 ```
 
 ![Project overview](docs/figures/project_overview.png)
@@ -42,9 +44,9 @@ Arduino / TFLite Micro
 
 ## From a 2-class prototype to a 12-class benchmark
 
-The first prototype used only **2 classes** to validate the complete inference chain.
+The project started with a simple **2-class prototype** used to validate the inference chain.
 
-The project was then scaled to the official **Google Speech Commands v0.02** dataset.
+It was then scaled to the official **Google Speech Commands v0.02** dataset.
 
 ### Dataset
 
@@ -53,7 +55,7 @@ The project was then scaled to the official **Google Speech Commands v0.02** dat
 - **2,618** speakers
 - **16 kHz** sampling rate
 
-The final TinyConv task contains **12 classes**:
+The final TinyConv benchmark contains **12 classes**:
 
 ```text
 _silence_
@@ -70,7 +72,7 @@ stop
 go
 ```
 
-The reproducible split used by the project is:
+The reproducible split used in the project is:
 
 | Split | Samples |
 |---|---:|
@@ -81,10 +83,10 @@ The reproducible split used by the project is:
 Each audio clip is transformed by the TensorFlow micro frontend into a:
 
 ```text
-49 × 40 = 1,960 feature
+49 × 40 = 1,960 features
 ```
 
-input tensor.
+input representation.
 
 ![Benchmark evolution](docs/figures/benchmark_2_to_12_classes.png)
 
@@ -92,32 +94,30 @@ input tensor.
 
 ## Experimental pipeline
 
-The same quantized input is used whenever possible on both the desktop and embedded targets.
+The project keeps the preprocessing and evaluation chain as consistent as possible between PC and embedded execution.
 
 ```mermaid
 flowchart LR
-    A[Speech Commands audio] --> B[Perturbation]
+    A[Speech Commands audio] --> B[Optional perturbation]
     B --> C[Micro frontend<br/>49 × 40]
     C --> D[TinyConv]
     D --> E[TFLite INT8]
-
     E --> F1[Desktop TFLite]
     E --> F2[Arduino Nano 33 BLE<br/>TFLite Micro]
-
-    F1 --> G[Scores / class]
+    F1 --> G[Scores / predicted class]
     F2 --> G
-
-    G --> H[CSV / comparison / analysis]
+    G --> H[CSV / metrics / analysis]
 ```
 
 Main tools:
 
-- Python
-- TensorFlow / Keras
+- **TensorFlow 2.20 / Keras**
 - TensorFlow Lite INT8
 - TensorFlow Lite Micro
+- Python
 - NumPy
-- Pandas
+- pandas
+- SciPy
 - Matplotlib
 - PySerial
 - Arduino IDE
@@ -126,228 +126,318 @@ Main tools:
 
 ---
 
-## Current robustness study
-
-The current public snapshot focuses mainly on the **input-perturbation / adversarial branch** of the project.
-
-Two complementary perturbation families are considered:
-
-### Additive noise
-
-Two noise types are used:
-
-#### White Gaussian noise
-
-- synthetic;
-- reproducible;
-- controlled through a target SNR;
-- useful for measuring the influence of noise level independently.
-
-#### Real background noise
-
-Examples are taken from the Speech Commands `_background_noise_` folder:
-
-- `doing_the_dishes.wav`
-- `running_tap.wav`
-- `exercise_bike.wav`
-
-These signals are used to test generalization to more realistic acoustic conditions.
-
-![Noise types](docs/figures/noise_types.png)
-
----
-
-## Why 10 dB?
-
-Several SNR values are evaluated:
-
-```text
-30 dB → 20 dB → 15 dB → 10 dB → 5 dB → 0 dB
-```
-
-The project uses **10 dB as the nominal noise condition**.
-
-It provides a useful compromise:
-
-- sufficiently noisy to expose model weaknesses;
-- still representative of plausible noisy acoustic environments;
-- less extreme than the 0 dB worst-case condition.
-
-The SNR is measured on the complete clip, including silent sections.
-
----
-
 ## Evaluation methodology
 
-Two experimental scenarios are used.
+Two complementary scenarios are used.
 
-### Scenario B — robustness of an already deployed model
+### Scenario B — evaluate an existing model
 
-The model is unchanged.
+The model remains unchanged and only the evaluation data is perturbed.
 
 ```text
-clean-trained model
-        ↓
-noisy / perturbed test set
-        ↓
-evaluation
+reference model
+      ↓
+perturbed test set
+      ↓
+robustness evaluation
 ```
 
-This measures the robustness of an existing model without retraining.
+This answers:
+
+> How robust is an already deployed model?
+
+For white-noise experiments, the reference campaign was repeated with **5 independent noise seeds**.
+
+Metrics include:
+
+- accuracy;
+- attack / prediction-switch rate;
+- class recall;
+- normalized confusion matrices;
+- mean and standard deviation;
+- 95% confidence intervals;
+- McNemar comparisons.
 
 ### Scenario A — robust retraining
 
 Perturbations are introduced during training.
 
 ```text
-perturbed training data
-        ↓
-Keras retraining
-        ↓
-perturbed evaluation
+clean + perturbed training data
+          ↓
+      Keras training
+          ↓
+  robust model evaluation
 ```
 
-The objective is to improve robustness while preserving clean-data performance.
+This answers:
 
-Main metrics include:
-
-- accuracy;
-- attack success / prediction-flip rate;
-- class recall;
-- confusion matrices;
-- SNR;
-- desktop ↔ embedded agreement.
+> Can robustness be improved without sacrificing clean performance?
 
 ---
 
-## Noise robustness — selected results
+## Noise robustness study
 
-### Reference TensorFlow INT8 model
+### White Gaussian noise
 
-Clean accuracy:
+White Gaussian noise provides a synthetic, reproducible perturbation whose severity can be controlled using SNR.
+
+The tested range is:
 
 ```text
-73.9 %
+30 dB → 20 dB → 15 dB → 10 dB → 5 dB → 0 dB
 ```
 
-Accuracy under white Gaussian noise:
+**10 dB** is used as the nominal noisy condition.
+
+The 5–15 dB region is treated as the main plausible noisy region, while 0 dB represents a severe worst-case condition.
+
+![SNR range](docs/figures/snr_range.png)
+
+---
+
+## Reference INT8 model
+
+The reference TinyConv model reaches:
+
+```text
+73.9% clean accuracy
+```
+
+under the original TensorFlow training recipe.
+
+Mean results over five Gaussian-noise seeds:
+
+| SNR | Accuracy | Δ vs clean | ASR |
+|---|---:|---:|---:|
+| 30 dB | 75.1 ± 0.1% | +1.2 pt | 5.9% |
+| 20 dB | 73.6 ± 0.1% | -0.3 pt | 10.2% |
+| 15 dB | 71.8 ± 0.4% | -2.1 pt | 13.6% |
+| **10 dB** | **68.1 ± 0.4%** | **-5.8 pt** | **18.6%** |
+| 5 dB | 62.3 ± 0.4% | -11.6 pt | 26.1% |
+| 0 dB | 52.9 ± 0.6% | -21.1 pt | 38.0% |
+
+The standard deviation remains below approximately **0.6 percentage point**, indicating that the degradation observed from 15 dB downward is much larger than seed-to-seed variation.
+
+![Reference noise robustness](docs/figures/reference_noise_5seeds.png)
+
+---
+
+## Confusion matrices
+
+Global accuracy alone does not describe the complete effect of noise.
+
+Some classes degrade much faster than others.
+
+At **10 dB**:
+
+```text
+stop : 85% → 57%
+left : 76% → 64%
+no   : 66% → 56%
+```
+
+At **0 dB**:
+
+```text
+stop  : 85% → 29%
+right : 84% → 50%
+left  : 76% → 50%
+no    : 66% → 39%
+```
+
+Typical increased confusions include:
+
+```text
+left → yes
+stop → up
+stop → off
+go → unknown
+```
+
+The effect is therefore not only a global accuracy decrease: noise changes **which semantic commands are confused**.
+
+<p align="center">
+  <img src="docs/figures/confusion_reference_20db.png" width="46%" />
+  <img src="docs/figures/confusion_reference_0db.png" width="46%" />
+</p>
+
+---
+
+## Why retrain the model?
+
+To evaluate robust training fairly, a Keras baseline was created with:
+
+- the same TinyConv architecture;
+- the same 49 × 40 input;
+- the same 12 outputs;
+- the same Speech Commands split;
+- **25 epochs**;
+- Adam optimizer;
+- no noise augmentation.
+
+Its clean accuracy is:
+
+```text
+75.0%
+```
+
+which is comparable to the original TensorFlow reference at **73.9%**.
+
+This Keras model is therefore used as the control when evaluating retrained models.
+
+![Training comparison](docs/figures/reference_vs_keras_training.png)
+
+---
+
+## Fixed-SNR training
+
+Training only at one SNR improves robustness around that specific condition, but creates a strong distribution shift.
+
+Example: model trained at **10 dB**.
+
+```text
+clean test : 36.2%
+10 dB test : 72.0%
+0 dB test  : 55.8%
+```
+
+The model becomes good around its training condition but almost unusable on clean speech.
+
+![Fixed SNR tradeoff](docs/figures/fixed_snr_tradeoff.png)
+
+---
+
+## Mixed-noise training
+
+The best current compromise is a mixed training strategy.
+
+Each clean training clip is combined with one Gaussian-noise copy whose SNR is randomly sampled between:
+
+```text
+0 and 20 dB
+```
+
+The resulting model achieves:
 
 | Test condition | Accuracy |
 |---|---:|
-| Clean | 73.9% |
-| 30 dB | 74.9% |
-| 20 dB | 73.6% |
-| 15 dB | 71.8% |
-| 10 dB | 68.0% |
-| 5 dB | 62.1% |
-| 0 dB | 53.4% |
-
-The model remains relatively stable down to approximately 20 dB, then progressively degrades.
-
-Some classes are significantly more sensitive than others.
-
-For example:
-
-```text
-stop: 85% → 29% at 0 dB
-right: 84% → 50%
-no: 66% → 39%
-```
-
----
-
-## Robust training
-
-Training on a single fixed SNR improves performance around that particular operating point, but can severely damage clean performance.
-
-Example:
-
-```text
-Model trained at 10 dB
-
-clean test : 36.2%
-10 dB test : 72.0%
-```
-
-This makes the model too specialized.
-
-### Mixed-noise training
-
-The best current compromise is a mixed training strategy:
-
-```text
-clean training data
-+
-one noisy copy
-+
-random white-noise SNR between 0 and 20 dB
-```
-
-Selected results:
-
-| Condition | Accuracy |
-|---|---:|
 | Clean | **75.9%** |
+| 20 dB | **74.3%** |
+| 15 dB | **73.2%** |
 | 10 dB | **71.6%** |
 | 5 dB | **66.6%** |
 | 0 dB | **59.5%** |
 
-This preserves clean performance while significantly improving robustness under severe noise.
+At the nominal **10 dB** condition:
+
+```text
+Keras clean-trained : 55.0%
+Mixed 0–20 dB      : 71.6%
+```
+
+while clean accuracy remains essentially unchanged.
+
+This makes mixed training the best robustness / clean-performance compromise evaluated so far.
 
 ![Noise robustness comparison](docs/figures/noise_robustness_comparison.png)
 
 ---
 
-## Adversarial robustness — V1
+## Training-condition × test-condition comparison
 
-The adversarial branch investigates gradient-based perturbations applied to the model input.
+Fixed-SNR models are generally strongest near their own training condition.
 
-The current V1 focuses on:
+The mixed model is more balanced across the complete test range.
 
-- **FGSM**
-- **PGD**
-- controlled perturbation budgets;
-- comparison between clean and adversarial inputs;
-- preparation for adversarial training.
+![Training test heatmap](docs/figures/training_test_heatmap.png)
 
-The first objective is to characterize how easily the TinyConv model can be destabilized in feature space.
+This highlights an important design tradeoff:
 
-A later stage will study whether perturbations generated in the `49 × 40` feature domain can be related back to physically meaningful audio perturbations.
-
-This is still an active research part of the project.
+> optimizing for a single operating point can increase local robustness while reducing generalization.
 
 ---
 
-## Arduino Nano 33 BLE integration
+## Which words are most affected?
 
-The selected model is deployed on an:
+Noise does not affect all commands uniformly.
+
+![Class recall comparison](docs/figures/class_recall_vs_noise.png)
+
+At the nominal 10 dB condition, the first classes to degrade are mainly:
+
+- `stop`
+- `left`
+- `no`
+
+At severe noise levels, some errors correspond to confusion between acoustically similar commands, while others correspond to the model no longer recognizing the command at all.
+
+---
+
+## Where do errors go?
+
+At severe noise levels, the distribution of errors depends strongly on the training strategy.
+
+The clean-trained Keras model can develop an **absorbing class**.
+
+For example, at 0 dB:
 
 ```text
-Arduino Nano 33 BLE Sense
-nRF52840
-Cortex-M4F
+62% of its errors are predicted as _silence_
 ```
 
-using TensorFlow Lite Micro.
+The mixed model distributes its errors more evenly:
 
-### From `.tflite` to firmware
+```text
+no predicted class receives more than ≈14% of errors
+```
 
-The deployment flow is:
+![Error destination](docs/figures/error_destination.png)
+
+---
+
+## Adversarial robustness — current V1
+
+A second branch of the project studies gradient-based adversarial perturbations.
+
+Current work includes:
+
+- FGSM;
+- PGD;
+- perturbations generated in the model feature space;
+- evaluation of controlled perturbation budgets;
+- preparation for adversarial training.
+
+The TinyConv input is the `49 × 40` feature representation rather than the raw waveform.
+
+A current research question is therefore:
+
+> Can a feature-space adversarial perturbation be related back to a physically meaningful audio perturbation?
+
+This part is still under active development and is intentionally not detailed extensively in this public snapshot.
+
+---
+
+# Embedded deployment
+
+## From TFLite to Arduino firmware
+
+The selected models are quantized to INT8 and converted into C/C++ arrays for integration into the Arduino firmware.
 
 ```text
 Keras model
     ↓
-INT8 TFLite model
+TFLite INT8
     ↓
 Arduino-compatible TFLite model
     ↓
 C/C++ byte array
     ↓
-micro_features_model.cpp / .h
+model_data.cpp / model_data.h
     ↓
 Arduino sketch
     ↓
-Nano 33 BLE Sense
+TensorFlow Lite Micro
 ```
 
 Example:
@@ -360,168 +450,210 @@ alignas(16) const unsigned char g_model[] = {
 const int g_model_len = 51224;
 ```
 
-The Arduino sketch accesses the model through:
-
-```cpp
-#include "micro_features_model.h"
-```
-
 ![TFLite to Arduino](docs/figures/tflite_to_arduino.png)
 
 ---
 
-## Desktop ↔ Nano validation
+## Deterministic PC ↔ Nano testing
 
-For reproducible embedded campaigns, the PC sends the same quantized input to the Nano.
+For controlled campaigns, the Arduino microphone is disabled.
 
-Protocol:
+The PC sends the exact already-quantized feature tensor used by the desktop interpreter:
 
 ```text
-Python PC
-    ↓
-INT8 quantization
-    ↓
-USB CDC / UART
-    ↓
-0xA5 + 1,960 INT8 bytes
-    ↓
-Nano / TFLite Micro
-    ↓
-12 scores + class + inference time
-    ↓
-PC/Nano comparison
+1 clip
+   ↓
+1,960 INT8 features
+   ↓
+USB serial
+   ↓
+Arduino / TFLite Micro
+   ↓
+Invoke()
+   ↓
+12 INT8 output scores
+   ↓
+PC comparison
 ```
 
-### Nominal embedded result
+The serial link runs at:
 
-On a fixed 500-sample nominal set:
+```text
+115200 baud
+```
+
+with feature data transferred in **64-byte packets**.
+
+The Arduino acknowledges each packet before the next one is transmitted, preventing USB buffer loss during long campaigns.
+
+![UART validation protocol](docs/figures/uart_validation_protocol.png)
+
+---
+
+## Quantization validation
+
+INT8 quantization has a negligible effect on accuracy.
+
+| Test set | Float32 | INT8 |
+|---|---:|---:|
+| Clean | 74.0% | 73.9% |
+| 30 dB | 75.0% | 74.9% |
+| 20 dB | 73.6% | 73.6% |
+| 15 dB | 71.8% | 71.8% |
+| 10 dB | 68.0% | 68.0% |
+| 5 dB | 62.2% | 62.1% |
+| 0 dB | 53.6% | 53.4% |
+
+Maximum measured accuracy difference:
+
+```text
+≤ 0.23 percentage point
+```
+
+The INT8 representation also reduces the model size from approximately:
+
+```text
+196 KB → 51 KB
+```
+
+or about:
+
+```text
+×3.8 smaller
+```
+
+![Quantization comparison](docs/figures/float_vs_int8.png)
+
+---
+
+## PC ↔ Arduino agreement
+
+For the reference model, full 4,726-sample campaigns show near-perfect reproduction of desktop inference on the Nano.
+
+| Test set | Arduino accuracy | PC INT8 accuracy | Agreement |
+|---|---:|---:|---:|
+| Clean | 73.9% | 73.9% | 99.98% |
+| 30 dB | 74.9% | 74.9% | 100.00% |
+| 20 dB | 73.7% | 73.7% | 100.00% |
+| 10 dB | 68.0% | 68.0% | 100.00% |
+| 5 dB | 62.2% | 62.2% | 100.00% |
+| 0 dB | 53.5% | 53.5% | 100.00% |
+
+Mean inference latency:
+
+```text
+≈ 83.7 ms
+```
+
+This demonstrates that the robustness measured with the desktop INT8 interpreter is reproduced by the embedded TFLite Micro implementation.
+
+![PC Nano full validation](docs/figures/pc_nano_reference_validation.png)
+
+---
+
+## TFLite Micro compatibility issue
+
+During the embedded integration, an important numerical compatibility issue was identified.
+
+### Symptom
+
+On an initial 50-clip validation set:
+
+```text
+PC / Arduino agreement ≈ 80%
+```
+
+despite the model apparently running correctly.
+
+### Cause
+
+TensorFlow 2.20 quantized the final fully-connected layer **per channel**, producing 12 separate weight scales.
+
+The older Arduino TensorFlow Lite Micro implementation used in the project interpreted only one scale for the layer.
+
+The issue therefore affected mainly ambiguous clips while leaving many obvious predictions unchanged.
+
+### Fix
+
+The final dense layer was converted to **per-tensor quantization**.
+
+After correction:
+
+```text
+prediction agreement
+80% → 100%
+
+score-level agreement
+0% → 100%
+```
+
+The accuracy cost is only about:
+
+```text
+-0.04 percentage point
+```
+
+Additional embedded fixes included:
+
+- adding the required `CONV_2D` operator;
+- increasing the Tensor Arena;
+- transmitting all 12 class scores;
+- introducing serial packet acknowledgements.
+
+![TFLM compatibility fix](docs/figures/tflm_fc_quantization_fix.png)
+
+---
+
+## Mixed model — recent embedded validation
+
+A more recent campaign evaluates the **mixed 0–20 dB robust model** on the Nano.
+
+On a fixed nominal set of 500 samples:
 
 | Metric | Result |
 |---|---:|
-| Desktop TFLite INT8 accuracy | **75.20%** |
-| Nano TFLite Micro accuracy | **75.20%** |
-| PC/Nano prediction agreement | **100%** |
-| Mean inference latency | **83.191 ms** |
+| PC INT8 accuracy | **75.20%** |
+| Nano accuracy | **75.20%** |
+| PC / Nano agreement | **100%** |
+| Mean latency | **83.191 ms** |
+| Model size | **51,224 bytes** |
 
-Embedded memory footprint:
+Full noisy campaigns currently validated:
 
-| Resource | Usage |
-|---|---:|
-| Program Flash | 210,680 bytes |
-| Program storage | ~21% |
-| Global RAM | 114,080 bytes |
-| Dynamic RAM usage | ~43% |
-| Model size | 51,224 bytes |
-| Tensor arena used | 9,060 bytes |
-| Tensor arena reserved | 16,384 bytes |
+| Condition | PC INT8 | Nano | Agreement |
+|---|---:|---:|---:|
+| 30 dB | 75.16% | 75.20% | 99.96% |
+| 20 dB | 74.31% | 74.27% | 99.96% |
 
-![PC Nano validation](docs/figures/pc_nano_validation.png)
+The 10 / 5 / 0 dB embedded campaigns are being replayed after a serial framing desynchronization observed during the long 10 dB campaign.
 
----
-
-## Embedded noise validation
-
-The mixed 0–20 dB model has also been evaluated using full noisy test sets.
-
-| Condition | PC INT8 | Nano INT8 | Agreement | Status |
-|---|---:|---:|---:|---|
-| Clean* | 75.20% | 75.20% | 100% | Validated |
-| 30 dB | 75.16% | 75.20% | 99.96% | Validated |
-| 20 dB | 74.31% | 74.27% | 99.96% | Validated |
-| 10 dB | 71.54% | — | ~99.9% before incident | Replay required |
-| 5 dB | 67.05% | — | — | Replay required |
-| 0 dB | 59.44% | — | — | Replay required |
-
-\* Clean result uses the fixed 500-sample nominal set.  
-30 dB and 20 dB use all 4,726 test samples.
-
-The Nano values collected after the UART synchronization incident at 10, 5 and 0 dB are intentionally **not reported as model performance**.
-
----
-
-## UART campaign note
-
-During the 10 dB embedded campaign, PC/Nano agreement remained approximately:
-
-```text
-99.9%
-```
-
-for the first ~3,000 samples.
-
-A framing error was then detected:
-
-```text
-expected response header : 0x5A
-received byte            : 0xC3
-```
-
-After this event, the response stream remained shifted.
-
-Because the inference latency remained around **84 ms**, the Nano was still executing the neural network correctly; the failure was attributed to serial framing / synchronization rather than to the model itself.
-
-Current mitigation:
-
-- reset Nano between test conditions;
-- reopen the serial port;
-- explicitly resynchronize on `0x5A` after an invalid frame;
-- consider sequence numbers / frame length / CRC for longer campaigns.
-
-![UART desynchronization](docs/figures/uart_desynchronization.png)
-
----
-
-## Embedded fault-injection branch
-
-The global FIATSAR project also includes software fault-injection experiments inside the quantized network.
-
-Current experimental fault models include:
-
-| ID | Fault |
-|---|---|
-| F1 | INT8 weight bit-flip |
-| F2 | Activation corruption |
-| F3 | Truncated accumulation |
-| F4 | Output corruption |
-
-These experiments are maintained in the repository but are **not the main focus of the current public robustness V1**.
-
-See:
-
-```text
-docs/RESULTS.md
-results/f1/
-results/f2/
-results/f3/
-results/f4/
-firmware/
-```
-
-for the detailed fault-injection results.
+The affected Nano values are therefore intentionally not reported as model performance.
 
 ---
 
 ## My contribution
 
-This is a two-student ENSIM engineering project.
+FIATSAR is a two-student ENSIM engineering project.
 
-My main work focuses on the **embedded and validation side**:
+My main contribution focuses on the **embedded and experimental-validation side**:
 
 - TensorFlow Lite Micro deployment;
 - Arduino Nano 33 BLE Sense integration;
-- INT8 compatibility and model conversion;
-- binary USB CDC / UART protocol;
-- deterministic PC ↔ Nano campaigns;
+- INT8 model compatibility;
+- model conversion and firmware integration;
+- PC ↔ Nano serial protocol;
+- deterministic embedded campaigns;
 - latency and memory measurements;
-- embedded validation of robust models;
-- diagnosis of PC ↔ Nano numerical / communication inconsistencies;
-- runtime fault-injection firmware and experimental tooling.
+- PC / Nano numerical consistency;
+- diagnosis and correction of TFLM compatibility issues;
+- validation of robust models on the target;
+- embedded experimental tooling.
 
-The dataset preparation, model retraining, noise analysis, FGSM / PGD experiments and robustness analysis are developed jointly with my project partner.
+The dataset generation, noise experiments, model retraining, robustness analysis and adversarial experiments are developed jointly within the project.
 
 ---
 
-## Repository layout
+## Repository structure
 
 ```text
 FIATSAR-TinyML-Robustness/
@@ -531,20 +663,13 @@ FIATSAR-TinyML-Robustness/
 │   ├── REPRODUCTION.md
 │   └── figures/
 ├── firmware/
-│   ├── f1_runtime/
-│   ├── f4_dynamic/
-│   └── experimental/
 ├── models/
 ├── results/
 │   ├── noise/
 │   ├── adversarial/
-│   ├── f1/
-│   ├── f2/
-│   ├── f3/
-│   └── f4/
+│   └── embedded/
 ├── scripts/
 │   ├── data/
-│   ├── faults/
 │   ├── adversarial/
 │   ├── tools/
 │   └── analysis/
@@ -552,11 +677,13 @@ FIATSAR-TinyML-Robustness/
 └── NOTICE.md
 ```
 
+The complete internal project contains additional experimental branches that are not all documented in this public snapshot.
+
 ---
 
 ## Quick start
 
-### 1. Python environment
+### Python environment
 
 ```bash
 python -m venv .venv
@@ -576,70 +703,26 @@ pip install -r requirements.txt
 
 ---
 
-### 2. Prepare the model
-
-Generate the Arduino-compatible C/C++ representation:
-
-```bash
-python scripts/tools/10_tflite_to_model_data.py \
-  --model models/tiny_conv_int8.tflite \
-  --output firmware/f1_runtime/model_data.h
-```
-
----
-
-### 3. Compile the Arduino firmware
-
-Open the relevant `.ino` project in Arduino IDE and select:
-
-```text
-Board: Arduino Nano 33 BLE
-```
-
-Compile and upload the firmware.
-
----
-
-### 4. Run a PC ↔ Nano campaign
-
-Example:
-
-```bash
-python scripts/faults/f1/26_test_f1_runtime.py \
-  --port COM3 \
-  --baseline YOUR_BASELINE.npz \
-  --sample 0 \
-  --tensor 6 \
-  --index 5 \
-  --bit 7
-```
-
-See:
-
-```text
-docs/REPRODUCTION.md
-```
-
-for complete experiment-specific commands.
-
----
-
 ## Reproducibility
 
-The repository intentionally does not bundle the full Google Speech Commands dataset.
+The full Google Speech Commands dataset is not bundled in this repository.
 
-Reproduction requires:
+To reproduce the experiments:
 
-1. obtaining Speech Commands v0.02;
-2. generating the same TensorFlow split;
-3. extracting the `49 × 40` micro frontend features;
-4. quantizing the features using the input tensor scale and zero-point;
-5. using the same fixed evaluation subsets for PC/Nano comparisons.
-
-Exact software versions and experiment-specific commands are documented in:
+1. obtain **Speech Commands v0.02**;
+2. reproduce the official TensorFlow speaker-hash split;
+3. generate the `49 × 40` micro frontend features;
+4. quantize inputs using the TFLite tensor scale and zero-point;
+5. use the same evaluation sets;
+6. use the experiment-specific scripts documented in:
 
 ```text
 docs/REPRODUCTION.md
+```
+
+Exact Python dependencies are available in:
+
+```text
 requirements.txt
 ```
 
@@ -647,28 +730,27 @@ requirements.txt
 
 ## Current limitations
 
-- adversarial experiments are currently a V1 performed primarily in feature space;
-- physical realizability of feature-space adversarial perturbations remains under study;
-- F3 reproduces the functional effect of an incomplete accumulation and is not yet a hardware instruction skip;
-- some legacy fault campaigns were not score-level bit-exact;
-- embedded 10 / 5 / 0 dB noise campaigns must be replayed after the UART framing issue;
-- ChipWhisperer clock / voltage glitching is outside the scope of this public snapshot;
-- the full Speech Commands dataset is not included.
+- adversarial attacks are currently an active V1 research branch;
+- feature-space perturbations are not yet equivalent to physically validated over-the-air audio perturbations;
+- embedded mixed-model campaigns at 10 / 5 / 0 dB are being replayed after a UART framing issue;
+- the complete Speech Commands dataset is not included;
+- this repository is a curated snapshot rather than the complete internal workspace.
 
 ---
 
 ## Academic context
 
-FIATSAR is a **5th-year ENSIM engineering project** focused on the robustness of embedded neural networks.
+FIATSAR is a **5th-year ENSIM engineering project** focused on the robustness and embedded deployment of TinyML neural networks.
 
-This repository is maintained as a portfolio and reproducibility snapshot documenting:
+This repository documents:
 
-- TinyML model evaluation;
-- noise and adversarial robustness;
+- reproducible KWS evaluation;
+- noise robustness;
+- robust retraining;
 - INT8 quantization;
 - TensorFlow Lite Micro deployment;
-- embedded validation;
-- experimental fault injection.
+- PC ↔ microcontroller validation;
+- ongoing adversarial-robustness work.
 
 No open-source license is currently granted.
 
